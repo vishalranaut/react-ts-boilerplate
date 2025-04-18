@@ -1,0 +1,128 @@
+/* Import Bootstrap */
+@import 'bootstrap/dist/css/bootstrap.min.css';
+/* Import Toastify CSS */
+@import 'react-toastify/dist/ReactToastify.css';
+
+:root {
+  --bs-body-bg: #121212;
+  --bs-body-color: #ffffff;
+  --bs-primary: #5c6bc0;
+  --bs-secondary: #b39ddb;
+  --bs-success: #4caf50;
+  --bs-info: #29b6f6;
+  --bs-warning: #ffb74d;
+  --bs-danger: #ef5350;
+  --bs-light: #424242;
+  --bs-dark: #212121;
+  --bs-border-color: rgba(255, 255, 255, 0.1);
+}
+
+body {
+  background-color: var(--bs-body-bg);
+  color: var(--bs-body-color);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: all 0.3s ease;
+}
+
+.form-control,
+.btn {
+  border-radius: 8px;
+  transition: all 0.2s ease-in-out;
+}
+
+.form-control {
+  background-color: var(--bs-dark);
+  border-color: var(--bs-border-color);
+  color: var(--bs-body-color);
+}
+
+.form-control:focus {
+  background-color: var(--bs-dark);
+  border-color: var(--bs-primary);
+  color: var(--bs-body-color);
+  box-shadow: 0 0 0 0.25rem rgba(92, 107, 192, 0.25);
+}
+
+.card {
+  background-color: var(--bs-dark);
+  border-color: var(--bs-border-color);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+.btn-primary {
+  background-color: var(--bs-primary);
+  border-color: var(--bs-primary);
+}
+
+.btn-primary:hover {
+  background-color: #3f51b5;
+  border-color: #3f51b5;
+}
+
+.btn-outline-primary {
+  color: var(--bs-primary);
+  border-color: var(--bs-primary);
+}
+
+.btn-outline-primary:hover {
+  background-color: var(--bs-primary);
+  color: white;
+}
+
+.navbar {
+  background-color: rgba(33, 33, 33, 0.9) !important;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+/* Animation for page transitions */
+.page-transition-enter {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.page-transition-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 300ms, transform 300ms;
+}
+
+.custom-toast {
+  background-color: var(--bs-dark);
+  color: var(--bs-body-color);
+  border-radius: 8px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+/* Links */
+a {
+  color: var(--bs-primary);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+a:hover {
+  color: var(--bs-info);
+}
+
+/* Custom container for auth pages */
+.auth-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 2rem 1rem;
+}
+
+.auth-card {
+  max-width: 480px;
+  margin: 0 auto;
+  width: 100%;
+}
