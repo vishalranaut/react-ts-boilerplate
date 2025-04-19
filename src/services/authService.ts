@@ -1,105 +1,106 @@
 import { apiService } from './api';
 
-interface LoginResponse {
-  user: {
-    id: string;
-    email: string;
-    name?: string;
-  };
-  token: string;
+interface User {
+  id: string;
+  email: string;
+  name?: string;
+  avatar?: string;
 }
 
-interface SignupResponse {
-  user: {
-    id: string;
-    email: string;
-    name?: string;
-  };
+interface AuthResponse {
+  success: boolean;
   token: string;
+  user: User;
 }
 
-// For demonstration, we'll mock the API calls to show how they would work
-// In a real application, these would use the apiService to make real API calls
 export const authService = {
-  login: async (email: string, password: string): Promise<LoginResponse> => {
-    // This would be a real API call in production
-    // return apiService.post<LoginResponse>('/auth/login', { email, password });
-    
-    // Mock implementation for demonstration
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        if (email === 'user@example.com' && password === 'password') {
-          resolve({
-            user: {
-              id: '1',
-              email: 'user@example.com',
-              name: 'Demo User',
-            },
-            token: 'mock-jwt-token',
-          });
-        } else {
-          reject({
-            response: {
-              data: {
-                message: 'Invalid email or password',
-              },
-            },
-          });
-        }
-      }, 1000);
-    });
+  login: async (email: string, password: string): Promise<AuthResponse> => {
+    try {
+      // First check if user exists
+      const users = await apiService.get<User[]>('/users', {
+        params: { email, password }
+      });
+
+      if (users.length === 0) {
+        throw new Error('Invalid credentials');
+      }
+
+      // Get auth token
+      const response = await apiService.post<AuthResponse>('/auth/login', {
+        email,
+        password
+      });
+
+      if (response.success && response.token) {
+        localStorage.setItem('authToken', response.token);
+        return response;
+      }
+
+      throw new Error('Authentication failed');
+    } catch (error) {
+      throw new Error('Invalid credentials');
+    }
   },
 
-  signup: async (formData: Record<string, any>): Promise<SignupResponse> => {
-    // This would be a real API call in production
-    // return apiService.post<SignupResponse>('/auth/signup', formData);
-    
-    // Mock implementation for demonstration
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        if (formData.email && formData.password) {
-          resolve({
-            user: {
-              id: '1',
-              email: formData.email,
-              name: formData.name || 'New User',
-            },
-            token: 'mock-jwt-token',
-          });
-        } else {
-          reject({
-            response: {
-              data: {
-                message: 'Invalid signup data',
-              },
-            },
-          });
-        }
-      }, 1000);
-    });
+  signup: async (formData: Record<string, any>): Promise<AuthResponse> => {
+    try {
+      // Check if user already exists
+      const existingUsers = await apiService.get<User[]>('/users', {
+        params: { email: formData.email }
+      });
+
+      if (existingUsers.length > 0) {
+        throw new Error('Email already registered');
+      }
+
+      // Create new user
+      const newUser = await apiService.post<User>('/users', {
+        id: Date.now().toString(),
+        email: formData.email,
+        password: formData.password,
+        name: formData.name,
+        avatar: `https://i.pravatar.cc/150?u=${Date.now()}`
+      });
+
+      // Get auth token
+      const response = await apiService.post<AuthResponse>('/auth/login', {
+        email: formData.email,
+        password: formData.password
+      });
+
+      if (response.success && response.token) {
+        localStorage.setItem('authToken', response.token);
+        return response;
+      }
+
+      throw new Error('Registration failed');
+    } catch (error) {
+      throw error;
+    }
   },
 
-  getCurrentUser: async () => {
-    // This would be a real API call in production
-    // return apiService.get('/auth/me');
-    
-    // Mock implementation for demonstration
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve({
-          id: '1',
-          email: 'user@example.com',
-          name: 'Demo User',
-        });
-      }, 500);
-    });
+  getCurrentUser: async (): Promise<User> => {
+    const token = localStorage.getItem('authToken');
+    if (!token) throw new Error('No token found');
+
+    try {
+      const response = await apiService.get<User>('/auth/me');
+      return response;
+    } catch (error) {
+      localStorage.removeItem('authToken');
+      throw new Error('Session expired');
+    }
   },
 
-  logout: async () => {
-    // This would be a real API call in production
-    // return apiService.post('/auth/logout');
-    
-    // Just clear the token on the client side for the demo
-    localStorage.removeItem('authToken');
+  logout: async (): Promise<void> => {
+    try {
+      await apiService.post('/auth/logout');
+    } finally {
+      localStorage.removeItem('authToken');
+    }
   },
+
+  updateProfile: async (userId: string, data: Partial<User>): Promise<User> => {
+    return apiService.put<User>(`/users/${userId}`, data);
+  }
 };
