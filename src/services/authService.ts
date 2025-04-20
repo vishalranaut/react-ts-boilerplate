@@ -1,8 +1,9 @@
-import { apiService } from './api';
+import { apiService } from "./api";
 
 interface User {
   id: string;
   email: string;
+  password: string;
   name?: string;
   avatar?: string;
 }
@@ -16,91 +17,71 @@ interface AuthResponse {
 export const authService = {
   login: async (email: string, password: string): Promise<AuthResponse> => {
     try {
-      // First check if user exists
-      const users = await apiService.get<User[]>('/users', {
-        params: { email, password }
+      const users = await apiService.get<User[]>("/users", {
+        params: { email, password },
       });
 
-      if (users.length === 0) {
-        throw new Error('Invalid credentials');
+      if (users.length === 1) {
+        const user = users[0];
+        const token = `mock-token-${user.id}`;
+        localStorage.setItem("authToken", token);
+        return { success: true, token, user };
       }
 
-      // Get auth token
-      const response = await apiService.post<AuthResponse>('/auth/login', {
-        email,
-        password
-      });
-
-      if (response.success && response.token) {
-        localStorage.setItem('authToken', response.token);
-        return response;
-      }
-
-      throw new Error('Authentication failed');
+      throw new Error("Invalid credentials");
     } catch (error) {
-      throw new Error('Invalid credentials');
+      throw new Error("Login failed. Please check your email and password.");
     }
   },
 
   signup: async (formData: Record<string, any>): Promise<AuthResponse> => {
     try {
-      // Check if user already exists
-      const existingUsers = await apiService.get<User[]>('/users', {
-        params: { email: formData.email }
+      const existingUsers = await apiService.get<User[]>("/users", {
+        params: { email: formData.email },
       });
 
       if (existingUsers.length > 0) {
-        throw new Error('Email already registered');
+        throw new Error("Email already registered");
       }
 
-      // Create new user
-      const newUser = await apiService.post<User>('/users', {
+      const newUser: User = {
         id: Date.now().toString(),
         email: formData.email,
         password: formData.password,
         name: formData.name,
-        avatar: `https://i.pravatar.cc/150?u=${Date.now()}`
-      });
+        avatar: `https://i.pravatar.cc/150?u=${Date.now()}`,
+      };
 
-      // Get auth token
-      const response = await apiService.post<AuthResponse>('/auth/login', {
-        email: formData.email,
-        password: formData.password
-      });
+      await apiService.post<User>("/users", newUser);
 
-      if (response.success && response.token) {
-        localStorage.setItem('authToken', response.token);
-        return response;
-      }
-
-      throw new Error('Registration failed');
+      // Auto login after signup
+      return await authService.login(formData.email, formData.password);
     } catch (error) {
-      throw error;
+      throw new Error("Signup failed. Please try again.");
     }
   },
 
   getCurrentUser: async (): Promise<User> => {
-    const token = localStorage.getItem('authToken');
-    if (!token) throw new Error('No token found');
+    const token = localStorage.getItem("authToken");
+    console.log("token", token);
+    if (!token) throw new Error("Not logged in");
+
+    const userId = token.split("-").pop();
+    if (!userId) throw new Error("Invalid token");
 
     try {
-      const response = await apiService.get<User>('/auth/me');
-      return response;
-    } catch (error) {
-      localStorage.removeItem('authToken');
-      throw new Error('Session expired');
+      return await apiService.get<User>(`/users/${userId}`);
+    } catch {
+      localStorage.removeItem("authToken");
+      throw new Error("Session expired. Please log in again.");
     }
   },
 
   logout: async (): Promise<void> => {
-    try {
-      await apiService.post('/auth/logout');
-    } finally {
-      localStorage.removeItem('authToken');
-    }
+    localStorage.removeItem("authToken");
   },
 
   updateProfile: async (userId: string, data: Partial<User>): Promise<User> => {
-    return apiService.put<User>(`/users/${userId}`, data);
-  }
+    return await apiService.put<User>(`/users/${userId}`, data);
+  },
 };

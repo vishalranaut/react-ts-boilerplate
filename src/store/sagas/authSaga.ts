@@ -8,11 +8,13 @@ import {
   signupRequest,
   signupSuccess,
   signupFailure,
+  fetchUserProfileRequest,
+  fetchUserProfileSuccess,
+  fetchUserProfileFailure,
 } from "../reducers/authSlice";
-import { PayloadAction } from "@reduxjs/toolkit";
 
 function* handleLogin(
-  action: PayloadAction<{ email: string; password: string }>
+  action: ReturnType<typeof loginRequest>
 ): Generator<any, void, any> {
   try {
     const { email, password } = action.payload;
@@ -27,7 +29,7 @@ function* handleLogin(
 }
 
 function* handleSignup(
-  action: PayloadAction<{ name: string; email: string; password: string }>
+  action: ReturnType<typeof signupRequest>
 ): Generator<any, void, any> {
   try {
     const response = yield call(authService.signup, action.payload);
@@ -40,7 +42,21 @@ function* handleSignup(
   }
 }
 
-export function* watchAuth(): Generator {
+function* handleFetchUserProfile(): Generator<any, void, any> {
+  try {
+    const response = yield call(authService.getCurrentUser);
+    yield put(fetchUserProfileSuccess(response.user));
+    toast.success("User profile fetched successfully!");
+  } catch (error: any) {
+    const message =
+      error.response?.data?.message || "Failed to fetch user profile";
+    yield put(fetchUserProfileFailure(message));
+    toast.error(message);
+  }
+}
+
+export function* watchAuth() {
   yield takeLatest(loginRequest.type, handleLogin);
   yield takeLatest(signupRequest.type, handleSignup);
+  yield takeLatest(fetchUserProfileRequest.type, handleFetchUserProfile);
 }

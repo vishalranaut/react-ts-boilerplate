@@ -22,8 +22,6 @@ const Home = ({
   error,
   isAuthenticated,
 }: HomeProps) => {
-  console.log("homepage content", pageContent);
-
   const getIconComponent = (iconName?: string) => {
     switch (iconName) {
       case "layers":
